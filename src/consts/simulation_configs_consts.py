@@ -1,0 +1,5 @@
+SIM_CONFIGS_NAME = 'name'
+SIM_CONFIGS_TRACES_PATH = 'simulation_traces_path'
+SIM_CONFIGS_ABR_MODULE = 'simulation_abr_module'
+SIM_CONFIGS_ABR_MODULE_PARAMETERS = 'simulation_abr_module_parameters'
+SIM_CONFIGS_REWARD_CONFIGS = 'simulation_reward_configs'
