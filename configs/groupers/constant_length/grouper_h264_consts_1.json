@@ -1,0 +1,12 @@
+{
+        "name": "grouper_h264_constant_1",
+        "module": "src/grouper/grouping_policies/grouper_h264_constant.py",
+        "class": "FixedSegmentsGrouperPolicy",
+        "parameters": {
+            "bitrate_ladders_csv": "resources/bitmovin_bitrate_settings.csv",
+            "seconds": 1
+
+        },
+        "store_folder": "1"
+
+}

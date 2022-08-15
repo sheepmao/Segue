@@ -1,0 +1,20 @@
+{
+        "name": "grouper_h264_rmpc_aware_optimizer_global_mean_switching_less",
+        "module": "src/grouper/grouping_policies/grouper_h264_simulation_suboptimal.py",
+        "class": "SimulationOptimizedGrouperPolicy",
+        "parameters": {
+            "bitrate_ladders_csv": "resources/bitmovin_bitrate_settings.csv",
+            "gop_seconds": 5,
+            "lookahead_opt": 5,
+            "sim_configs": "configs/simulator/train/rmpc_aware_train.json",
+            "simulation_reward_look_past" : -1,
+            "simulation_reward_look_future": 0,
+            "simulation_vmaf_model_name" : "vmaf_4k",
+            "cache_store_folder_template": "videos/{}/caches/gop_5/{}",
+            "cache_file_name": "cache.mp4",
+            "fragments_folder_template": "videos/{}/caches/gop_5/{}/fragments"
+
+        },
+        "store_folder": "5_5"
+
+}

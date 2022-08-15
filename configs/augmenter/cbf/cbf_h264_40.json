@@ -1,0 +1,4 @@
+{"name": "cbf_h264_40", "splitting_module": "src/augmenter/splitting_strategies/h264_splitter.py", "splitting_class": "H264Splitter", "splitting_args": {"splitting_vmaf": "vmaf_4k"}, "augmenter_module": "src/augmenter/augmentation_strategies/cbf.py", "augmenter_class": "CBF", "augmenter_module_args": {"augmenter_encoding_name": "reduce_to_mean",
+		 "augmenter_encoding_module": "src/augmenter/augmentation_strategies/augmentation_encoders/h264_mean_same_augmentation_encoder.py",
+		 "augmenter_encoding_class": "H264MeanSameAE",
+		  "vmaf_th": 40}}

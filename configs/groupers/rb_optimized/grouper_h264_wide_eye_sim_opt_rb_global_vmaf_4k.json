@@ -1,0 +1,25 @@
+{
+        "name": "grouper_h264_rb_optimizer_wide_eye_vmaf_4k_global_mean_switching_less_slow_paced",
+        "module": "src/grouper/grouping_policies/grouper_h264_simulation_wide_eye_suboptimal.py",
+        "class": "SimulationOptimizedWEGrouperPolicy",
+        "parameters": {
+            "bitrate_ladders_csv": "resources/bitmovin_bitrate_settings.csv",
+            "gop_seconds": 5,
+            "lookahead_opt": 10,
+            "bytes_like_average_seconds_opt": 5,
+            "target_segments_length_opt": 5,
+            "wide_eye_step": 5,
+            "wide_eye_combo_filter": 32,
+            "wide_eye_filtering_res":0,
+            "sim_configs": "configs/simulator/train/rb_train.json",
+            "simulation_reward_look_past" : -1,
+            "simulation_reward_look_future": 10,
+            "simulation_vmaf_model_name" : "vmaf_4k",
+            "cache_store_folder_template": "videos/{}/caches/gop_5/{}",
+            "cache_file_name": "cache.mp4",
+            "fragments_folder_template": "videos/{}/caches/gop_5/{}/fragments"
+
+        },
+        "store_folder": "5_5"
+
+}

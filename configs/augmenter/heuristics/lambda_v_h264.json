@@ -1,0 +1,16 @@
+{
+	"name": "lambda_v_h264",
+	"splitting_module": "src/augmenter/splitting_strategies/h264_splitter.py",
+	"splitting_class": "H264Splitter",
+	"splitting_args" :{
+		"splitting_vmaf" : "vmaf_4k"
+	},
+	"augmenter_module" : "src/augmenter/augmentation_strategies/lambda_v.py",
+	"augmenter_class": "LambdaV",
+	"augmenter_module_args" : {
+		 "augmenter_encoding_name": "halved_up",
+		 "augmenter_encoding_module": "src/augmenter/augmentation_strategies/augmentation_encoders/h264_halved_up_augmentation_encoder.py",
+		 "augmenter_encoding_class": "H264HalvedUpAE",
+		 "vmaf_th": 8
+	}
+}

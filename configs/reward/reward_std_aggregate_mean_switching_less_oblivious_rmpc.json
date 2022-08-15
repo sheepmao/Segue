@@ -1,0 +1,17 @@
+{
+	 "simulation_reward_module" : "src/utils/reward/std_reward_estimator_oblivious.py",
+         "simulation_reward_class" : "STDRewardEstimatorOblivious",
+         "reward_id": "linear_standard_param",
+         "simulation_reward_parameters" : {
+            				"unit_time": 1.0,
+            				"rebuffering_penalty": 100.0 ,
+            				"switching_penalty": 1,
+            				"vmaf_gain": 1 ,
+            				"time_normalization_factor" : 4.0,
+					"aggregate_mean": true,
+					"time_normalization_factor" : 4.0,
+					"rebuffering_penalty_bitrate": 8.0,
+					"reward_switching_penalty_bitrate": 1,
+					"reward_gain_bitrate": 1
+            }
+}

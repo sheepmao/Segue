@@ -1,0 +1,8 @@
+{
+	"name": "vmaf_hdtv_h264",
+	"splitting_module": "src/augmenter/splitting_strategies/h264_splitter.py",
+	"splitting_class": "H264Splitter",
+	"splitting_args" :{
+		"splitting_vmaf" : "vmaf_hdtv"
+	}
+}

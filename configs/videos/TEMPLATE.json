@@ -1,0 +1,7 @@
+{
+	"video_path": "PATH-TO-VIDEO",
+	"name": "VIDEO-NAME",
+	"resolutions": "RES1 RES2",
+	"video_extension": "EXTENSIONE(eg.mp4)",
+	"video_codec": "VIDEO-CODEC-HERE(e.g. h264)"
+}

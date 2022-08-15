@@ -1,0 +1,6 @@
+{	"name": "rmpc_oblivious",  
+	"simulation_traces_path": "traces/traces_simulate", 
+	"simulation_abr_module":  "src/simulator/simulator_policies/abr/rmpc5_quick.py",
+	"simulation_reward_configs": "configs/reward/reward_std_aggregate_mean_switching_less_oblivious_rmpc.json"
+}
+

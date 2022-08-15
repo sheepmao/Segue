@@ -1,0 +1,25 @@
+{
+	"name": "lambda_bv_sim_bb_h264",
+	"splitting_module": "src/augmenter/splitting_strategies/h264_splitter.py",
+	"splitting_class": "H264Splitter",
+	"splitting_args" :{
+		"splitting_vmaf" : "vmaf_4k"
+	},
+	"augmenter_module" : "src/augmenter/augmentation_strategies/lambda_bv_sim.py",
+	"augmenter_class": "LambdaBVSim",
+	"augmenter_module_args" : {
+		 "augmenter_encoding_name": "reduce_to_mean",
+		 "augmenter_encoding_module": "src/augmenter/augmentation_strategies/augmentation_encoders/h264_mean_same_augmentation_encoder.py",
+		 "augmenter_encoding_class": "H264MeanSameAE",
+		 "range_vmaf_min": 5,
+		 "range_vmaf_max": 15,
+		 "range_vmaf_step": 1,
+		 "range_br_perc_min": 5,
+		 "range_br_perc_max": 20,
+		 "range_br_perc_step": 5,
+		 "sim_configs": "configs/simulator/train/bb_train.json",
+            	 "look_past" : -1,
+            	 "look_future": 0,
+            	 "look_ahead": 5
+	}
+}

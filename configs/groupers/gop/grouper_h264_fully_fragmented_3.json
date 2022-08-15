@@ -1,0 +1,16 @@
+{
+        "name": "grouper_h264_fully_fragmented",
+        "module": "src/grouper/grouping_policies/grouper_h264_fully_fragmented.py",
+        "class": "FullyFragmentedGrouperPolicy",
+        "parameters": {
+            "bitrate_ladders_csv": "resources/bitmovin_bitrate_settings.csv",
+            "gop_seconds": 3,
+            "simulation_vmaf_model_name" : "vmaf_4k",
+            "cache_store_folder_template": "videos/{}/caches/gop_3/{}",
+            "cache_file_name": "cache.mp4",
+            "fragments_folder_template": "videos/{}/caches/gop_3/{}/fragments"
+
+        },
+        "store_folder": "3_3"
+
+}

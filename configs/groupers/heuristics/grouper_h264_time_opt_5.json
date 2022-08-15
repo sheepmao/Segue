@@ -1,0 +1,17 @@
+{
+        "name": "grouper_h264_time_optimizer",
+        "module": "src/grouper/grouping_policies/grouper_h264_time_suboptimal.py",
+        "class": "TimeOptimizedGrouperPolicy",
+        "parameters": {
+            "bitrate_ladders_csv": "resources/bitmovin_bitrate_settings.csv",
+            "gop_seconds": 5,
+            "target_segments_length_opt": 5,
+            "lookahead_opt": 5,
+            "cache_store_folder_template": "videos/{}/caches/gop_5/{}",
+            "cache_file_name": "cache.mp4",
+            "fragments_folder_template": "videos/{}/caches/gop_5/{}/fragments"
+
+        },
+        "store_folder": "5_5"
+
+}
