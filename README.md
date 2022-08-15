@@ -35,9 +35,12 @@ the execution script.
 
 
 
-## Configs
+## Configuration of Segue strategies
 
-Instructions coming soon!
+In `./configs` all the details for configure Segue segmentation
+and augmentation strategies are explained. 
+Also, the preset of configurations tested in our paper are made available.
+
 
 
 ## Executions
