@@ -1,0 +1,6 @@
+.PHONY: postprocessing
+SHELL := /bin/sh
+
+
+post: <<DEPENDENCIES>> 
+	PYTHONPATH=`pwd` SEGUE_VIDEO=REAL python3 src/postprocesser/elaborate.py <<EXPERIMENTS_LIST>> --reward_configs <<REWARD_CONFIGS>> --logs_dir <<LOGS_DIR>> --traces_seen <<TRACES_SEEN>> --figs_dir <<FIGS_DIR>> --out_csv_dir <<OUT_CSV>>
