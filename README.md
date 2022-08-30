@@ -75,7 +75,7 @@ The parameters description is the following:
 
 ## Example
 
-If I would like, for example, to verify *WideEye segmentation performance, absent of augmentation* for video B and a buffer based algorithm for a trace set denominted SLOW with the VMAF MOBILE perceptual quality model, you would run:
+If you would like, for example, to execute *WideEye segmentation, absent of augmentation* for video B and a buffer based algorithm for a trace set denominted SLOW with the VMAF MOBILE perceptual quality model, you would run:
 
 `./execute_segue.sh B BB SLOW MOBILE WIDE-EYE NONE`
 
