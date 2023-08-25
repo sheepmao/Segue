@@ -18,7 +18,7 @@ import traceback
 from pathlib import Path
 from src.consts.reward_consts import *
 from src.consts.simulation_file_consts import *
-
+from src.utils.logging.logging_segue import create_logger
 RANDOM_SEED = 42
 
 
@@ -64,7 +64,12 @@ def main(LOG_DIR, RESULT_DIR, VIDEO_FILE, TRACE_FILE, ABR_MODULE, QOE_CONFIGS):
     enable_log("ABRController")
     enable_log("SimState")
     enable_log("ABR")
-    logger = logging.getLogger("ABR Controller")
+    log_file = os.path.join(LOG_DIR, '{}.log'.format(ntpath.basename(TRACE_FILE).replace('.txt', '')))
+    #logger = create_logger('ABRController', log_file, verbose=True)
+    logger = logging.getLogger("ABRController")
+    logger.info("Starting ABR Controller")
+    logger.info("Log file is stored in {}".format(log_file))
+    #logger = logging.getLogger("ABR Controller")
     
 
     VIDEO_PROPERTIES = load_video_properties(VIDEO_FILE)

@@ -38,6 +38,7 @@ def create_postprocessing(experiments_tuples, args, logger):
 
 
 if __name__=="__main__":
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiments_list", action="append", nargs=8, metavar=('video_config', 'abr_config', 'grouper_config', 'augmenter_config', 'nickname', 'simulation_file', 'experiments_dir', 'cache_dir'), help='List of the manifests to analyze', required=True)
     parser.add_argument("--reward_configs", type=str, required=True)
@@ -56,15 +57,22 @@ if __name__=="__main__":
         
     pmkdir(args.logs_dir)
     log_file = os.path.join(args.logs_dir, 'make_postprocessing.log')
-    logger = create_logger('Postprocessing', log_file, verbose=args.verbose)
+    logger = create_logger('Postprocessing', log_file, verbose=True)
     logger.info("Postprocessing: start")
     logger.info("Logs file stored in {}".format(log_file))
+    logger.info("Loading reward data from module {}".format(args.reward_configs))
  
     try:
-            logger.info("loading reward data from module {}".format(args.reward_configs))
+            # Load reward module from the json file
             reward_data = jload(args.reward_configs)
+            # Get the module from the json file
             reward_module = reward_data[REWARD_MODULE].replace('/', '.').replace('.py', '')
-            reward_class = reward_data[REWARD_CLASS]            
+            # Get the class name from the json file
+            reward_class = reward_data[REWARD_CLASS]
+            # Load the module and get the class from the module by using getattr
+            # getattr is used to get the class from the module by using the class name as a string
+            # if successful, RewardClass is the class of the reward module, otherwise an exception is raised
+            #  (e.g., getattr(module, class_name)) 
             RewardClass = getattr(importlib.import_module(reward_module), reward_class)
     except:
             logger.info("Error while loading the reward module")
@@ -75,8 +83,10 @@ if __name__=="__main__":
     
     experiments_tuples = {}
     
-
+    logger.info("Start Loading experiments")
     for exp in args.experiments_list:
+        for idx,e in enumerate(exp):
+            print("Exp argument[{}]: {}".format(idx, e))
         video_data = jload(exp[0])
         video_name = video_data[K_NAME_VIDEO]
         
@@ -95,19 +105,25 @@ if __name__=="__main__":
         
         
         video_path = video_data[K_VIDEO_PATH]
+        logger.info("Loading video FPS")
         fps = Video(video_path, args.logs_dir).load_fps()
         reward_module = RewardClass(logger, fps, reward_args)
+
         if not os.path.exists(exp[6]):
-            print("{} does not exists".format(exp[6]))
+            print("Dir: {} does not exists".format(exp[6]))
+            os.makedirs(exp[6])
             continue
+        # pmddir[exp[7] is the cache dir for the experiment (e.g., cache/BBB)
         pmkdir(exp[7])
+
         
         logger.debug("Loading experiment: Video => {}, abr name => {}, grouper_name => {},\
                         augmenter_name => {}, nickname => {}, simulation file => {},\
                         results dir => {}, caches dir => {}".format(video_name, abr_name, grouper_name,
                                                                     augmenter_name, exp[4], exp[5], exp[6], exp[7]))
 
-
+        # t is a tuple containing the experiment information
+        # vido_name, abr_name, grouper_name, augmenter_name, nickname, simulation_file, results_dir, reward_module,caches_dir
         t = (video_name, abr_name, grouper_name, augmenter_name, exp[4], exp[5], exp[6], reward_module, exp[7])
         already_in = False
 
@@ -124,9 +140,16 @@ if __name__=="__main__":
     pmkdir(args.out_csv_dir)
     
     csv_distribution_list = {}
-
     for video, t in experiments_tuples.items():
-        print("Analyzing video {}".format(video))       
+        print("Analyzing video {}".format(video))    
+        # using loop to print tuple seperate
+        # print tuple in new line
+        for idx, e in enumerate(t):
+            print("Tuple[{}]: {}".format(idx, e))
+        # create postprocessing object for each video which take 
+        # as input the list of experiments tuples
+        # following code is printing the tuple
+        print("Now \n\n",experiments_tuples[video])
         p_plot = create_postprocessing(  experiments_tuples[video], args, logger)
         metrics = p_plot.get_distributions()
 

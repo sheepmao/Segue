@@ -102,8 +102,8 @@ class SegmentsHandler:
         self.resolutions = self.video_data[K_RESOLUTIONS].split()
         self.logger.debug("Original video resolution = {}".format(self.resolutions))
         
-
-        self.rescaled_video_template = args.rescaled_video_template.format('{}', EXTENSION)
+        # $(RESULT_DIR)/$(VIDEO_FOLDER)/$(GROUPING_POLICY_FOLDER)/video/{}/unfragmented.{}
+        self.rescaled_video_template = args.rescaled_video_template.format('{}', EXTENSION) 
         self.logger.debug("Rescaled video template is {}".format(self.rescaled_video_template))
 
         self.multires_video = None

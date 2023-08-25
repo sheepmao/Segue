@@ -4,7 +4,7 @@ from src.grouper.grouping_policies.grouper_optimizer.grouper_wide_eye_optimizer 
 import numpy as np
 import math
 from datetime import datetime
-
+from itertools import product
 LOOK_PAST_ALL = -1
 
 # Simulation Optimized - Time-Bytes Filtered ==> SOTBF
@@ -50,13 +50,13 @@ class GrouperWideEyeSOTBF(GrouperWideEyeOptimizer):
     
 
     def time_bytes_scored(self, combo, start_segment):
-        
+        # combo is a list of booleans, True = merge, False = no merge
         combo_fragments = self.fragments.apply(start_segment, combo)
-        merges_no = combo.count(True)
-        combo_lookahead = len(combo) - merges_no 
+        merges_no = combo.count(True) # count the number of merges True = merge, False = no merge so if count = 3 , then will have 3 segments after merging
+        combo_lookahead = len(combo) - merges_no # ex len(combo) = 5, merges_no = 3, so combo_lookahead = 2
 
         bytess = [x[self.template_res_index] for x in combo_fragments.load_bytes(start_segment, combo_lookahead)]
-        timess = combo_fragments.load_durations(start_segment, combo_lookahead)
+        timess = combo_fragments.load_durations(start_segment, combo_lookahead) 
         
         if self.max_length > 0 and max(timess) > self.max_length:
             return float(math.inf)
@@ -91,12 +91,12 @@ class GrouperWideEyeSOTBF(GrouperWideEyeOptimizer):
 
 
     def combo_reward(self, combo_args):
-        combo_fragments = combo_args[0]
+        combo_fragments = combo_args[0] # first element of the list is the first segment after merging
         combo = combo_args[1]
         
         sim_ss = self.real_set.copy()
         init_pos = sim_ss.get_chunk_index()
-        sim_steps = combo.count(False) + 1
+        sim_steps = combo.count(False) + 1 # ex: [True, False, False, True] => 3 + 1 = 4, 
         if self.look_past > 0:
             start_segment = max(0, init_pos - self.look_past)
         else:
@@ -106,6 +106,9 @@ class GrouperWideEyeSOTBF(GrouperWideEyeOptimizer):
         
         sim_data = combo_fragments.get_simulation_data(start=0, end=-1)
         end_segment = min(init_pos + sim_steps + self.look_future, len(sim_data))
+
+        # compute the reward for the simulation by calling the function step_n in sim_state.py : 
+        # step_n(self, VIDEO_PROPERTIES, n, fr, to, use_pool = True)
         r = sim_ss.step_n(sim_data, sim_steps + self.look_future, start_segment, end_segment)
         return r
     
@@ -121,3 +124,41 @@ class GrouperWideEyeSOTBF(GrouperWideEyeOptimizer):
 
     def initialize_reward(self):
         return -1*float(math.inf)
+    def compute_suboptimal(self):
+        self.logger.info("Starting suboptimal optimization")
+        options = [True, False]
+        
+        iterator = 0
+
+        if self.start_segment != 0:
+            self.logger.debug("Already computed suboptimal")
+            return
+        while True:
+                
+            self.winning_reward = self.initialize_reward()
+            self.winning_combo = None
+
+            s_lookahead = self.effective_lookahead() # here is 5 
+            
+            if s_lookahead == 0:
+                break
+            
+            combos = list(product(options,repeat=s_lookahead))
+            #will generate a list of tuples with all possible combinations of True and False 
+            # ex: [(True, True, True), (True, True, False), (True, False, True), (True, False, False), (False, True, True), 
+            # (False, True, False), (False, False, True), (False, False, False)] each tuple is a combo of merge and no merge contain 5 elements
+            effective_combos = self.prefilter_combos(combos, s_lookahead)
+            self.logger.info("Prefiltering completed. {} combos have been computed".format(len(effective_combos)))
+            for combo in effective_combos:
+                self.logger.debug("Checking combo={}".format(combo))
+                combos_args = self.apply_combo(combo) # return a list of [0]fragments after combo merging like following    and the [1]combo tuple
+                                                      # MultilevelVideo( past_s + combo_s + future_s, logger=self.logger)
+                reward = self.combo_reward(combos_args)
+                self.logger.debug("Combo reward={}  {}".format(reward, "best so far" if reward < self.winning_reward else "not best"))
+                self.compare_rewards(reward, combo)
+            self.logger.info("winning combo is {}".format(self.winning_combo))
+            self.logger.info("Winning combo was ranked {}".format(effective_combos.index(self.winning_combo)))
+            assert self.winning_combo != None
+            self.apply_winning_combo()
+            iterator += self.step
+            self.logger.info("Iterator => {}, remaining => {}".format(iterator/self.step, (self.total_keyframes - iterator)/self.step))

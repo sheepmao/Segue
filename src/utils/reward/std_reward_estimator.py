@@ -21,43 +21,43 @@ class STDRewardEstimator(RewardEstimator):
         
         super().__init__(logger)
         
-        self.logger.debug("Reward module initialization")
+        self.logger.debug("--QOE Module--Reward module initialization")
         
         self.fps = fps
         assert self.fps > 0
         
-        self.logger.debug("fps = {}".format(self.fps))
+        self.logger.debug("--QOE Module--fps = {}".format(self.fps))
 
         
         self.unit_time = args[REWARD_UNIT_TIME]
         assert self.unit_time > 0
-        self.logger.debug("Unit time = {}".format(self.unit_time))
+        self.logger.debug("--QOE Module--Unit time = {}".format(self.unit_time))
 
 
         self.rebuffering_penalty = args[REWARD_REBUFFERING_PENALTY]
         assert self.rebuffering_penalty > 0
-        self.logger.debug("Rebuffering penalty = {}".format(self.rebuffering_penalty))
+        self.logger.debug("--QOE Module--Rebuffering penalty = {}".format(self.rebuffering_penalty))
 
         
         self.switching_penalty = args[REWARD_SWITCHING_PENALTY]
         assert self.switching_penalty > 0
-        self.logger.debug("Switching penalty = {}".format(self.switching_penalty))
+        self.logger.debug("--QOE Module--Switching penalty = {}".format(self.switching_penalty))
         
         self.vmaf_gain = args[REWARD_VMAF_GAIN]
         assert self.vmaf_gain > 0
-        self.logger.debug("VMAF gain = {}".format(self.vmaf_gain))
+        self.logger.debug("--QOE Module--VMAF gain = {}".format(self.vmaf_gain))
         
         
         self.time_normalization_factor = args[REWARD_TIME_NORMALIZATION_FACTOR]
         assert self.time_normalization_factor > 0
-        self.logger.debug("Time normalization factor = {}".format(self.time_normalization_factor))
+        self.logger.debug("--QOE Module--Time normalization factor = {}".format(self.time_normalization_factor))
         
         if REWARD_AGGREGATE_MEAN in args.keys():
             self.reward_aggregate_mean = args[REWARD_AGGREGATE_MEAN]
-            self.logger.debug("Aggregate mean: {}".format(self.reward_aggregate_mean))
+            self.logger.debug("--QOE Module--Aggregate mean: {}".format(self.reward_aggregate_mean))
         else:
             self.reward_aggregate_mean = False
-            self.logger.debug("Aggregate mean: {}".format(self.reward_aggregate_mean))
+            self.logger.debug("--QOE Module--Aggregate mean: {}".format(self.reward_aggregate_mean))
 
     def copy(self):
         args = {}
@@ -74,7 +74,7 @@ class STDRewardEstimator(RewardEstimator):
                                             start_segment, end_segment, use_pool = False):
         
         rewards = []
-        self.logger.debug("Evaluating reward from simulation set. Cardinality: {}".format(len(sim_set.ss_set)))
+        self.logger.debug("--QOE Module--Evaluating reward from simulation set. Cardinality: {}".format(len(sim_set.ss_set)))
         tasks = product(sim_set.ss_set, [(self, state, start_segment, end_segment)])
         if use_pool:
             with Pool(THREADS) as pool:
@@ -112,7 +112,7 @@ class STDRewardEstimator(RewardEstimator):
                     - self.switching_penalty * vmaf_diff_curr
         
         if debug:
-            print("Vmaf diff {}, rebuf {}, vmaf {}, reward: {}".format(vmaf_diff_curr, level_current[SIM_FILE_VMAF]*vmaf_reward_normalization, self.rebuffering_penalty, reward))
+            print("--QOE Module--Vmaf diff {}, rebuf {}, vmaf {}, reward: {}".format(vmaf_diff_curr, level_current[SIM_FILE_VMAF]*vmaf_reward_normalization, self.rebuffering_penalty, reward))
         return reward
 
 

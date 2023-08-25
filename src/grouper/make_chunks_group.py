@@ -24,6 +24,8 @@ from src.consts.keys_consts import *
 from src.consts.segments_composition_consts import *
 import traceback
 
+#from src.grouper.grouping_policies.grouper_h264_RL import RLGrouperPolicy
+
 def pmkdir(kdir):
     if not os.path.exists(kdir):
         os.makedirs(kdir)
@@ -57,6 +59,13 @@ class Grouper():
         
         self.specific_raw_crf = args.specific_raw_crf
         self.verbose = args.verbose
+        ## use RL grouper policy or not
+        self.use_rl_policy = args.use_rl_policy
+        self.use_rl_policy = False
+        if self.use_rl_policy:
+            self.logger.info("Using RL grouper policy")
+            self.rl_grouper_policy = RLGrouperPolicy()
+            #TODO
 
         ## creation of the logger
         self.logs_dir = args.logs_dir
@@ -133,8 +142,14 @@ class Grouper():
 
     def make_groups(self):
         self.logger.info("Determining the groups")
+
         try:
-            self.groups = self.grouper_policy.make_groups()
+            if self.use_rl_policy:
+                self.logger.info("RL groupers")
+                self.groups = self.rl_grouper_policy.make_groups()
+            else:
+                self.logger.info("Original groupers")
+                self.groups = self.grouper_policy.make_groups()
         except:
             self.logger.error("Something went wrong while computing the groups")
             self.logger.exception("message")
@@ -250,6 +265,7 @@ if __name__=="__main__":
    
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--use_rl_policy', action='store_false', help='Use RL grouper policy')
     parser.add_argument("--video_configs", help="json file with the video configurations", type=str, required=True)
     parser.add_argument("--grouper_configs", help="json file with the grouper configurations", type=str, required=True)
     parser.add_argument("--raw_segments", help="directory in which the raw segments are gonna be stored: useful for augmentation", type=str, required=True)

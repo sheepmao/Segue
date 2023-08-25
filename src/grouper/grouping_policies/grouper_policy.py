@@ -88,7 +88,7 @@ class GrouperPolicy(ABC):
 
         method[K_RESCALING_METHOD_KEYFRAMES_APPROACH] = K_RESCALING_METHOD_KEYFRAMES_GOP
         g = float(self.grouper_data[K_PARAMETERS_GROUPER][K_GOP_SECONDS_GROUPER])
-        method[K_RESCALING_METHOD_GOP_SECONDS] = g 
+        method[K_RESCALING_METHOD_GOP_SECONDS] = g # K_RESCALING_METHOD_GOP_SECONDS = 'gop_seconds' specified in src/consts/rescaling_method_consts.py
         return method
 
 

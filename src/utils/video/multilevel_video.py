@@ -129,11 +129,16 @@ class MultilevelVideo:
 
     def apply(self, start_index, assemble_combo):
         #past_s = [ s.copy() for s in self.multilevel_segments[0: start_index]]
+        # past_s is a list of segments past the start_index
         past_s = [ s for s in self.multilevel_segments[0: start_index]]
         self.log_msg("Previous segments are {}".format(len(past_s)))
+
+        # apply_on_window returns a list of segments that are the result of merging the segments in the window
         combo_s = self.apply_on_window(start_index, assemble_combo)
         self.log_msg("Combi segments are {}".format(len(combo_s)))
         #future_s = [ s.copy() for s in self.multilevel_segments[ (start_index + len(assemble_combo) + 1):]]
+
+        # future_s is a list of original segments after the end of the window 
         future_s = [ s for s in self.multilevel_segments[ (start_index + len(assemble_combo) + 1):]]
         self.log_msg("Future segments are {}".format(len(future_s)))
         
@@ -143,6 +148,8 @@ class MultilevelVideo:
         self.log_msg("Past( {} ) + Combo ( {} ) + Future ( {} ) == Pre Combi ( {} ) - N. merges ( {} ) ??".format(len(past_s), len(combo_s), len(future_s), len(self.multilevel_segments), no_merges))
         assert len(past_s) + len(combo_s) + len(future_s) == len(self.multilevel_segments) - no_merges
         
+
+        # return a new MultilevelVideo object with the merged segments list
         return MultilevelVideo( past_s + combo_s + future_s, logger=self.logger)
 
 
@@ -159,6 +166,7 @@ class MultilevelVideo:
         assert end <= self.chunks_no
         simulation_data = {}
         self.log_msg("Loading simulation data {} - {}".format(start, end))
+        # get segments simulation data from start to end
         for c in range(start, end):
             s = self.multilevel_segments[c].get_simulation_data(c)  
             simulation_data[c] = s

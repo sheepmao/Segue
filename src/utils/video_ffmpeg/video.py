@@ -8,7 +8,9 @@ from shutil import copyfile
 from src.utils.logging.logging_segue import create_logger
 from src.utils.read_ladders.ladders import Ladders
 from src.consts.rescaling_method_consts import *
-
+# ADD
+from tempfile import TemporaryDirectory
+import shutil
 B_IN_BYTE = 8
 M_IN_K = 1000
 
@@ -18,9 +20,35 @@ def pmkdir(kdir):
 
 
 class Video:
+    """
+    A wrapper around ffmpeg to retrieve and manipulate video information.
+    
+    This class provides functionalities to:
+    - Retrieve video details (like fps, duration, resolution etc.)
+    - Rescale videos at different resolutions.
+    - Segment videos based on keyframes.
+    """
+
+    ''' Attributes: fps, duration, total_frames, bytes, resolution, 
+        bitrate, keyframes_index_list, keyframes_timestamp_list'''
+
+    '''Utility function include: load_fps, load_duration, load_total_frames, load_bytes, 
+                                 load_resolution, load_bitrate, load_keyframes_indexes, 
+                                 load_keyframes_timestamps, load_keyframes, dump_key_cache, read_key_cache
+                                 rescale_h264_constant_quality, rescale_at_resolution,
+                                 check_other_video, video_path, get_video_stats,
+                                 rescale_at_res_method_switching,  rescale_h264_two_pass, rescale_vp9_two_pass,
+                                '''
     
     def __init__(self, video_path, logdir, verbose=False, concat_file=None):
+        """
+        Initializes the Video object.
         
+        :param video_path: Path to the video file.
+        :param logdir: Directory for storing logs.
+        :param verbose: Flag indicating verbosity level.
+        :param concat_file: File used for concatenating videos (if needed).
+        """
 
         self.logs_dir = logdir
         self.verbose = verbose
@@ -63,10 +91,15 @@ class Video:
         self._keyframes_timestamp_list = None
     
     def video_path(self):
+        """
+        Returns the video path associated with the Video object.
+        """
         return self._video_path
 
     def load_resolution(self):
-
+        """
+        Loads and returns the resolution of the video.
+        """
         if self._resolution:
             self.logger.debug("Already computed resolution: {}".format(self._resolution))
             return self._resolution
@@ -81,7 +114,9 @@ class Video:
         return self._resolution
 
     def load_total_frames(self):
-        
+        """
+        Calculates and returns the total number of frames in the video.
+        """
         if self._total_frames:
             self.logger.debug("Already computed total frames: {}".format(self._total_frames))
             return self._total_frames
@@ -110,6 +145,9 @@ class Video:
 
     
     def load_fps(self):
+        """
+        Loads and returns the frames-per-second (FPS) of the video.
+        """
         
         if self._fps:
             self.logger.debug("Already computed FPS: {}".format(self._fps))
@@ -131,6 +169,9 @@ class Video:
 
     
     def load_duration(self):
+        """
+        Loads and returns the duration (in seconds) of the video.
+        """
         if self._duration:
             self.logger.debug("Already computed duration: {}".format(self._duration))
             return self._duration
@@ -146,6 +187,9 @@ class Video:
 
     
     def load_bytes(self):
+        """
+        Loads and returns the size (in bytes) of the video.
+        """
         if self._bytes:
             self.logger.debug("Already computed bytes: {}".format(self._bytes))
             return self._bytes
@@ -155,6 +199,9 @@ class Video:
 
     
     def load_bitrate(self):
+        """
+        Calculates and returns the bitrate of the video.
+        """
         if self._bitrate:
             self.logger.debug("Already computed bitrate: {}".format(self._bitrate))
             return self._bitrate
@@ -163,11 +210,19 @@ class Video:
         return self._bitrate
 
     def get_video_stats(self):
+        """
+        Retrieves and returns a tuple of video stats: duration, bitrate, and size in bytes.
+        """
         return self.load_duration(), self.load_bitrate(), self.load_bytes()
     
     
     def check_other_video(self, other_video_path, force):
-
+        """
+        Checks the existence and validity of another video. If force is True, overwrites the existing video.
+        
+        :param other_video_path: Path to the other video.
+        :param force: Flag indicating if overwriting is allowed.
+        """
         if os.path.exists(other_video_path) and not force:
             self.logger.debug("Video exists and force option deselected")
             other_video = Video(other_video_path, self.logs_dir, self.verbose)
@@ -194,63 +249,22 @@ class Video:
         
         return None
 
-
-
-    def rescale_h264_constant_quality(  self, 
-                                        video_out_path, 
-                                        crf, 
-                                        gop, 
-                                        forced_key_frames=None, 
-                                        force=False):
-
-        self.logger.debug("Selected rescale method h264 in constant quality")
-        
-        video = self.check_other_video(video_out_path, force)
-        if video is not None:
-            return video
-
-        gop_string = ""
-        if gop > 0:
-            self.logger.debug("Rescaling with a gop of {}".format(gop))
-            gop_string = "-g {}".format(gop)
-        
-        forced_key_frames_string = ""
-
-        if forced_key_frames is not None:
-            if isinstance(forced_key_frames, list):
-                self.logger.debug("List of keyframes specified")
-                k_string = ['eq(n,{})'.format(k) for k in forced_key_frames]
-                k_string = '+'.join(k_string).strip()
-                forced_key_frames_string = '-force_key_frames "expr:{}"'.format(k_string)
-
-        cmd = "ffmpeg -i {} -c:v libx264 -crf {} {} {} -y {}".format(   self._video_path, 
-                                                                        crf, 
-                                                                        forced_key_frames_string,
-                                                                        gop_string, 
-                                                                        video_out_path)
-
-        self.logger.info("Executing {}".format(cmd))
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        outs, errs = proc.communicate()
-        assert os.path.exists(video_out_path)
-        self.logger.info("Rescaling from {} to {} completed succesfully!".format(self._video_path, video_out_path))
-        video = Video(video_out_path, self.logs_dir, self.verbose)
-        
-        if (video.load_total_frames() != self.load_total_frames()):
-            self.logger.error("Video {} exists but wasn't encoded correctly. ".format(video_out_path))
-            self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format( video.load_total_frames(),
-                                                                                                self.load_total_frames()))
-            os.remove(video_out_path)
-            sys.exit(-1)
-        else:
-            return video
-    
+   
 
     # Not all I-frames are keyframes. -skip_frame nokey will skip non-KF I-frames.
     # Care to filter by "pict type"
 
     def load_keyframes_timestamps(self, all_frames=False):
+        """
+        Fetches timestamps of keyframes in the video. If all_frames is set, it fetches timestamps of all frames.
+
+        :param all_frames: bool, optional (default is False)
+            If set to True, fetches timestamps of all frames, else only keyframes.
         
+        :return: list
+            List of timestamps.
+        """
+
         skip_no_key = "-skip_frame nokey" 
         if all_frames:
             self.logger.debug("Retrieving timestamps of all frames")
@@ -286,7 +300,12 @@ class Video:
 
 
     def load_keyframes_indexes(self):
-        
+        """
+        Fetches and returns indexes of keyframes in the video.
+
+        :return: list
+            List of keyframe indexes.
+        """
 
         if self._keyframes_index_list:
             self.logger.debug("Already computed keyframe indexes: {}".format(self._keyframes_index_list))
@@ -313,7 +332,12 @@ class Video:
    
 
     def dump_key_cache(self, cache_file):
+        """
+        Saves keyframe data to a cache file for quicker access in the future.
 
+        :param cache_file: str
+            Path to the cache file where keyframe data will be saved.
+        """
         self._keyframes_index_list = self.load_keyframes_indexes()
         self._keyframes_timestamp_list = self.load_keyframes_timestamps()
         self.logger.debug("Dumping into {}".format(cache_file))
@@ -324,6 +348,15 @@ class Video:
             json.dump(data, fout)
     
     def read_key_cache(self, cache_file):
+        """
+        Reads keyframe data from a provided cache file.
+
+        :param cache_file: str
+            Path to the cache file from which keyframe data will be read.
+        
+        :return: list
+            List of keyframe data.
+        """
         with open(cache_file, 'r') as fin:
             data = json.load(fin)
             self._keyframes_timestamp_list = data['timestamps']
@@ -331,7 +364,17 @@ class Video:
             
 
     def load_keyframes(self, cache=False, cache_file=None):
+        """
+        Loads keyframes from the video. If cache is enabled, tries to read from cache first.
+
+        :param cache: bool, optional (default is False)
+            If set to True, reads keyframes from cache if available.
+        :param cache_file: str, optional
+            Path to the cache file. Required if cache is set to True.
         
+        :return: list
+            List of keyframes.
+        """    
         if self._keyframes_index_list and self._keyframes_timestamp_list and not cache:
             self.logger.debug("Keyframes lists already computed")
             self.logger.debug("Keyframes indexes: {}".format(self._keyframes_index_list))
@@ -369,7 +412,25 @@ class Video:
                                 method,
                                 cache=False,
                                 cache_file=None):
+        """
+        Rescales the video to a given resolution using a specified codec and method.
 
+        :param file_out: str
+            Path where the rescaled video will be saved.
+        :param resolution: tuple
+            Desired resolution for the output video (width, height).
+        :param codec: str
+            Video codec to be used for encoding.
+        :param ladders_df: DataFrame
+            DataFrame containing bitrate ladders for different resolutions.
+        :param method: str
+            Rescaling method to be used.
+        :param cache: bool, optional (default is False)
+            If set to True, uses cache for keyframes.
+        :param cache_file: str, optional
+            Path to the cache file. Required if cache is set to True.
+        """
+        ...
         ## if cache is on:
             ## cache file exists: cache_file is copied to cache out
             ## cache file doesn't exist: file out is computed, then copied to cache
@@ -420,7 +481,7 @@ class Video:
             self.logger.debug("Creating {}".format(os.path.dirname(file_out)))
             os.makedirs(os.path.dirname(file_out))
         
-    
+        print("Rescaling video from resolution {} to {}".format(self.load_resolution(), resolution))
         video = self.rescale_at_res_method_switching(ladder, file_out, method, codec)
 
         if cache:
@@ -434,7 +495,19 @@ class Video:
 
 
     def rescale_at_res_method_switching(self, ladder, fileout, method, codec): 
-        
+        ''' Mthod_ID is the key of the method in the json file and defined in src/consts/rescaling_method_consts.py'''
+        """
+        Selects the appropriate rescaling method based on the provided method string.
+
+        :param ladder: dict
+            Dictionary containing the resolution and bitrate information.
+        :param fileout: str
+            Path where the rescaled video will be saved.
+        :param method: str
+            Rescaling method to be used.
+        :param codec: str
+            Video codec to be used for encoding.
+        """
         method_id = method[K_RESCALING_METHOD_KEYFRAMES_APPROACH]
         self.logger.debug("selected rescaling method is {}".format(method))
 
@@ -515,8 +588,20 @@ class Video:
 
 
     def rescale_vp9_two_pass(self, ladders, fileout, gop=-1,  constant_keys_interval=-1, force=False): 
-        
+        """
+        Rescales the video using the VP9 codec with two-pass encoding.
 
+        :param ladders: list
+            List of dictionaries containing resolution and bitrate information for different levels.
+        :param fileout: str
+            Path where the rescaled video will be saved.
+        :param gop: int, optional (default is -1)
+            Group of Pictures size.
+        :param constant_keys_interval: int, optional (default is -1)
+            Interval for forced keyframes.
+        :param force: bool, optional (default is False)
+            If set to True, will forcibly overwrite the output video if it already exists.
+        """
         video = self.check_other_video(fileout, force)
         if video is not None:
             return video
@@ -555,9 +640,223 @@ class Video:
         else:
             return video
             
-    
-    def rescale_h264_crf( self, crf, res, fileout, g=-1, forced_key_frames=None, force=False):
+
+ 
+    def rescale_h264_two_pass(  self, ladders, fileout, gop=-1,
+                                forced_key_frames=None, 
+                                force=False):
+        """
+        Rescales the video using the h264 codec with two-pass encoding.
+
+        :param ladders: list
+            List of dictionaries containing resolution and bitrate information for different levels.
+        :param fileout: str
+            Path where the rescaled video will be saved.
+        :param gop: int, optional (default is -1)
+            Group of Pictures size.
+        :param forced_key_frames: list, optional
+            List of frames to be forced as keyframes.
+        :param force: bool, optional (default is False)
+            If set to True, will forcibly overwrite the output video if it already exists.
+        """
+        video = self.check_other_video(fileout, force)
+        if video is not None:
+            return video
+
+        if gop > 0:
+            assert forced_key_frames == None, "If gop is selected, forced keys must be deselected"
+            keyframes_specs = "-g {}".format(gop)
+        elif forced_key_frames is not None:
+            assert gop == -1, "If forced key frames is selected, gop must be deselected"
+            key_string = ['eq(n,{})'.format(k) for k in forced_key_frames]
+            key_string = '+'.join(key_string).strip()
+            keyframes_specs =  '-force_key_frames "expr:{}"'.format(key_string)
+        else:
+            keyframes_specs = ''
+
+        temp_name = next(tempfile._get_candidate_names())
         
+
+        first_pass, second_pass = ladders.format_cmd_h264_two_pass(self.logger, self.load_duration())
+       
+        first_pass = first_pass.format(self._video_path, keyframes_specs, temp_name)
+        second_pass = second_pass.format(self._video_path, keyframes_specs, temp_name, fileout)
+        
+        pmkdir(os.path.dirname(fileout))
+
+        two_pass = first_pass + ' && ' + second_pass
+        self.logger.debug("Executing {}".format(two_pass))
+        proc = subprocess.Popen(two_pass, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        outs, errs = proc.communicate()
+        
+        if os.path.exists(temp_name+ '-0.log'):
+            os.remove(temp_name+ '-0.log')
+        if os.path.exists(temp_name+ '-0.log.mbtree'):
+            os.remove(temp_name+ '-0.log.mbtree')
+
+        video = Video(fileout, self.logs_dir, self.verbose)
+        if (video.load_total_frames() != self.load_total_frames()):
+            self.logger.error("Video {} exists but wasn't encoded correctly. ".format(fileout))
+            self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format( video.load_total_frames(), self.load_total_frames()))
+            os.remove(fileout)
+            sys.exit(-1)
+        else:
+            forced_key_frames = None
+            return video
+            
+
+    def rescale_h264_constant_quality(  self, 
+                                        video_out_path, 
+                                        crf,
+                                        gop, 
+                                        forced_key_frames=None, 
+                                        force=False):
+        """
+        Rescales the video using h264 codec with constant quality.
+        
+        :param video_out_path: Output path for the rescaled video.
+        :param crf: Constant Rate Factor for the video encoding.
+        :param gop: Group of pictures size.
+        :param forced_key_frames: List of frames to be forced as keyframes.
+        :param force: Flag to force the re-encoding even if output exists.
+        """
+        '''Rescale a video at a given resolution, using ffmpeg and h264 codec'''
+        '''If force_key_frames is not None, the video is rescaled using the keyframes 
+        specified which will serve as boundaries for the segments'''
+
+
+        self.logger.debug("Selected rescale method h264 in constant quality")
+        
+        video = self.check_other_video(video_out_path, force)
+        if video is not None:
+            return video
+
+        gop_string = ""
+        if gop > 0:
+            self.logger.debug("Rescaling with a gop of {}".format(gop))
+            gop_string = "-g {}".format(gop)
+        
+        forced_key_frames_string = ""
+
+        if forced_key_frames is not None:
+            if isinstance(forced_key_frames, list):
+                self.logger.debug("List of keyframes specified")
+                k_string = ['eq(n,{})'.format(k) for k in forced_key_frames]
+                k_string = '+'.join(k_string).strip()
+                forced_key_frames_string = '-force_key_frames "expr:{}"'.format(k_string)
+
+        cmd = "ffmpeg -i {} -c:v libx264 -crf {} {} {} -y {}".format(   self._video_path, 
+                                                                        crf, 
+                                                                        forced_key_frames_string,
+                                                                        gop_string, 
+                                                                        video_out_path)
+
+        self.logger.info("Executing {}".format(cmd))
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        outs, errs = proc.communicate()
+        assert os.path.exists(video_out_path), "Video {} does not exist".format(video_out_path)
+        self.logger.info("Rescaling from {} to {} completed succesfully!".format(self._video_path, video_out_path))
+        video = Video(video_out_path, self.logs_dir, self.verbose)
+        
+        if (video.load_total_frames() != self.load_total_frames()):
+            self.logger.error("Video {} exists but wasn't encoded correctly. ".format(video_out_path))
+            self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format( video.load_total_frames(),
+                                                                                                self.load_total_frames()))
+            os.remove(video_out_path)
+            sys.exit(-1)
+        else:
+            return video
+    def rescale_h264_constant_quality_list(self,
+                                    video_out_path,
+                                    crf_values,
+                                    gop,
+                                    forced_key_frames=None,
+                                    force=False):
+        """
+        Rescales the video using h264 codec with constant quality CRF list to encode each segment.
+        
+        :param video_out_path: Output path for the rescaled video.
+        :param crf: Constant Rate Factor for the video encoding.
+        :param gop: Group of pictures size.
+        :param forced_key_frames: List of frames to be forced as keyframes.
+        :param force: Flag to force the re-encoding even if output exists.
+        """
+
+        self.logger.debug("Selected rescale method h264 in constant quality")
+
+        video = self.check_other_video(video_out_path, force)
+        if video is not None:
+            return video
+
+        gop_string = ""
+        if gop > 0:
+            self.logger.debug("Rescaling with a gop of {}".format(gop))
+            gop_string = "-g {}".format(gop)
+
+        # Create a temporary directory to store each segment
+        with TemporaryDirectory() as temp_dir:
+            last_keyframe = 0
+            segments = []
+            for i, keyframe in enumerate(forced_key_frames[1:-1]): # Exclude first and last keyframe
+                segment_path = f"{temp_dir}/segment_{i}.mp4"
+                segments.append(segment_path)
+                crf = crf_values[i]
+                cmd = "ffmpeg -i {} -ss {} -to {} -c:v libx264 -crf {} {} -y {}".format(
+                    self._video_path,   
+                    last_keyframe,
+                    keyframe,
+                    crf,
+                    gop_string,
+                    segment_path)
+                print("Executing {}".format(cmd))
+                self.logger.info("Executing {}".format(cmd))
+                proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                outs, errs = proc.communicate()
+                assert os.path.exists(segment_path), f"Segment {segment_path} does not exist"
+
+                last_keyframe = keyframe
+
+            # Concatenate all segments
+            concat_file = f"{temp_dir}/concat_list.txt"
+            with open(concat_file, "w") as f:
+                for segment in segments:
+                    f.write(f"file '{segment}'\n")
+
+            concat_cmd = "ffmpeg -f concat -safe 0 -i {} -c copy -y {}".format(concat_file, video_out_path)
+            proc = subprocess.Popen(concat_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            outs, errs = proc.communicate()
+
+        assert os.path.exists(video_out_path)
+        self.logger.info("Rescaling from {} to {} completed successfully!".format(self._video_path, video_out_path))
+        video = Video(video_out_path, self.logs_dir, self.verbose)
+
+        if video.load_total_frames() != self.load_total_frames():
+            self.logger.error("Video {} exists but wasn't encoded correctly. ".format(video_out_path))
+            self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format(
+                video.load_total_frames(),
+                self.load_total_frames()))
+            os.remove(video_out_path)
+            sys.exit(-1)
+        else:
+            return video
+
+    def rescale_h264_crf( self, crf, res, fileout, g=-1, forced_key_frames=None, force=False):
+        """
+        Rescales the video using the h264 codec with Constant Rate Factor (CRF).
+
+        :param crf: int
+            Constant Rate Factor value for quality control.
+        :param res: tuple
+            Desired resolution for the output video (width, height).
+        :param fileout: str
+            Path where the rescaled video will be saved.
+        :param g: int, optional (default is -1)
+            Group of Pictures size.
+        :param forced_key_frames: list, optional
+            List of frames to be forced as keyframes.
+        :param force: bool, optional (default is False)
+            If set to True, will forcibly overwrite the output video if it already exists.
+        """      
         video = self.check_other_video(fileout, force)
         
         if video is not None:
@@ -595,57 +894,3 @@ class Video:
             forced_key_frames = None
             return video
         
-
- 
-    def rescale_h264_two_pass(  self, ladders, fileout, gop=-1,
-                                forced_key_frames=None, 
-                                force=False):
-        
-        
-        video = self.check_other_video(fileout, force)
-        if video is not None:
-            return video
-
-        if gop > 0:
-            assert forced_key_frames == None, "If gop is selected, forced keys must be deselected"
-            keyframes_specs = "-g {}".format(gop)
-        elif forced_key_frames is not None:
-            assert gop == -1, "If forced key frames is selected, gop must be deselected"
-            key_string = ['eq(n,{})'.format(k) for k in forced_key_frames]
-            key_string = '+'.join(key_string).strip()
-            keyframes_specs =  '-force_key_frames "expr:{}"'.format(key_string)
-        else:
-            keyframes_specs = ''
-
-        temp_name = next(tempfile._get_candidate_names())
-        
-
-        first_pass, second_pass = ladders.format_cmd_h264_two_pass(self.logger, self.load_duration())
-       
-        first_pass = first_pass.format(self._video_path, keyframes_specs, temp_name)
-        second_pass = second_pass.format(self._video_path, keyframes_specs, temp_name, fileout)
-        
-        pmkdir(os.path.dirname(fileout))
-
-        two_pass = first_pass + ' && ' + second_pass
-        self.logger.debug("Executing {}".format(two_pass))
-        proc = subprocess.Popen(two_pass, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        outs, errs = proc.communicate()
-        
-        if os.path.exists(temp_name+ '-0.log'):
-            os.remove(temp_name+ '-0.log')
-        if os.path.exists(temp_name+ '-0.log.mbtree'):
-            os.remove(temp_name+ '-0.log.mbtree')
-        
-        video = Video(fileout, self.logs_dir, self.verbose)
-        if (video.load_total_frames() != self.load_total_frames()):
-            self.logger.error("Video {} exists but wasn't encoded correctly. ".format(fileout))
-            self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format( video.load_total_frames(), self.load_total_frames()))
-            os.remove(fileout)
-            sys.exit(-1)
-        else:
-            forced_key_frames = None
-            return video
-            
-
-

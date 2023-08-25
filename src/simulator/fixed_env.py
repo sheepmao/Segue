@@ -6,12 +6,12 @@
 
 import numpy as np
 import logging, ntpath
-
+from src.utils.logging.logging_segue import create_logger
 MILLISECONDS_IN_SECOND = 1000.0
 B_IN_MB = 1000000.0
 BITS_IN_BYTE = 8.0
 RANDOM_SEED = 42
-
+#VIDEO_CHUNCK_LEN = 4000.0  # millisec, every time add this amount to buffer  Pensieve original use fixed chunk length
 BUFFER_THRESH = 60.0 * MILLISECONDS_IN_SECOND  # millisec, max buffer limit
 DRAIN_BUFFER_SLEEP_TIME = 500.0  # millisec
 PACKET_PAYLOAD_PORTION = 0.95
@@ -30,8 +30,8 @@ class Environment:
     def __init__(self, trace, random_seed=RANDOM_SEED):
         self.random_seed = random_seed
         np.random.seed(self.random_seed)
-        self.logger = logging.getLogger('StreamEnv')
-        self.logger.setLevel(logging.ERROR)
+        self.logger = logging.getLogger('Controller.StreamEnvironment') 
+        self.logger.setLevel(logging.ERROR) # DEBUG, INFO, WARNING, ERROR, CRITICAL
         self.buffer_size = 0
         self.mahimahi_ptr = 1
         self.cooked_time, self.cooked_bw = trace[0], trace[1]

@@ -7,7 +7,7 @@ import traceback, importlib, glob
 import src.simulator.load_trace as load_trace
 import numpy as np
 import sys
-
+from src.utils.logging.logging_segue import create_logger
 RESULTS_DUMP = ["TIME", "SEGMENT_PROGRESSIVE", "DURATION", "BYTES", "QUALITY_INDEX", "RESOLUTION", "BITRATE", "VMAF", "REBUF", "BUFFER_STATE", "DELAY", "REWARD"]
 DEFAULT_QUALITY = 1
 NORMALIZATION_FACTOR = 4.0
@@ -15,8 +15,9 @@ NORMALIZATION_FACTOR = 4.0
 cpu_count = multiprocessing.cpu_count()
 
 def createSimStateSet(abr_module_str, qoe_module_str, qoe_module_class, qoe_module_args, traces_folder, fps):
-    logger = logging.getLogger("SimState")
-    logger.setLevel(logging.ERROR)
+    logger = logging.getLogger("ABRController.SimState")
+    #logger.setLevel(logging.DEBUG)
+
     try:
         logger.info("Loading ABR module {}".format(abr_module_str))
         abr_module = importlib.machinery.SourceFileLoader('abr', abr_module_str).load_module()
@@ -90,6 +91,22 @@ class SimStateSet():
         return self.qoe_module.aggregate_rewards(rewards)
 
     def step_n(self, VIDEO_PROPERTIES, n, fr, to, use_pool = True):
+        """
+        Step n times for each SimState in the set
+        VIDEO_PROPERTIES: the segment list which obtained from MultileveVideo class function get_simuation_data() 
+        which will call multilevel_segment class function get_simuation_data() like following:
+        {"0":{"chunk_progressive":0,"n_levels":2,"levels":[
+            {resolution:"640x360, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False,"vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }
+            ,resolution:"854x380, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False, "vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] } 
+                                                          ]
+             },
+         "1":{"chunk_progressive":1,"n_levels":2,"levels":[
+            {resolution:"640x360, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False,"vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }
+            ,resolution:"854x380, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False, "vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }
+                                                            ]
+             },....
+        }
+        """
         if use_pool :
             tasks = product(self.ss_set, [(VIDEO_PROPERTIES, n, fr, to)])
             with Pool(cpu_count) as pool: ## That shouldn't be fixed
@@ -122,8 +139,12 @@ class SimStateSet():
 class SimState():
     """ Essentially a network environment + abr + qoe, keeps track of the history
     of steps """
+    '''Video properties is a list of dictionaries, which is created by function load_video_properties in src/simulator/abr_controller.py 
+    each dictionary is a segment which contains the following keys:
+    duration: duration of the segment in seconds
+    '''
     def __init__(self, abr, qoe, net, trace_idx):
-        self.logger = logging.getLogger("SimState")
+        self.logger = logging.getLogger("ABRController.SimState")
         self.net = net
         self.qoe = qoe
         self.abr = abr
@@ -132,7 +153,6 @@ class SimState():
 
         self.history = []
         self.video_done = False
-
     def is_done(self):
         return self.video_done
 
@@ -156,6 +176,17 @@ class SimState():
         return self.qoe.evaluate_reward_per_unit_time([downloaded_vmaf_sequence, rebuffering_time])
 
     def step(self, VIDEO_PROPERTIES):
+        """        VIDEO_PROPERTIES = {"0":{"chunk_progressive":0,"n_levels":2,"levels":[
+            {resolution:"640x360, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False,"vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }
+            ,resolution:"854x380, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False, "vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] } 
+                                                          ]
+             },
+         "1":{"chunk_progressive":1,"n_levels":2,"levels":[
+            {resolution:"640x360, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False,"vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }
+            ,resolution:"854x380, "bitrate":529, "vmaf":94, "bytes":330668,"duration":2.0,"is_augment":False, "vmaf_per_frame":[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] }
+                                                            ]
+             },....
+        }"""
         # Check we don't exhaust video
         if self.chunk_index >= len(VIDEO_PROPERTIES):
             self.video_done = True
@@ -171,7 +202,8 @@ class SimState():
         def level_obj(idx):
             if idx is None: return None
             return VIDEO_PROPERTIES[self.chunk_index]["levels"][idx]
-
+        # print("Contain levels:", VIDEO_PROPERTIES[self.chunk_index]["levels"])
+        # print("Requested level:", level)
         lo = level_obj(level)
         prev_lo = None
         if self.history != []:

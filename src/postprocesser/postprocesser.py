@@ -429,13 +429,17 @@ class ExperimentSet:
 
     def load_experiments(self, experiments_directory, traces_directory):
         if self.experiments:
+            self.logger.debug("Experiments already loaded")
             return self.experiments
-        
+        print("Loading experiments from {} and {}".format(experiments_directory, traces_directory))
         self.experiments = []
         self.experiments_by_trace_file = {}
-
+        print("Path",glob.glob(os.path.join(traces_directory, '*')))
         for trace_file in glob.glob(os.path.join(traces_directory, '*')):
             csv = os.path.basename(trace_file)
+            print("Open trace file {}".format(csv))
+            #print csv
+            print(csv)
             cache_file = None
             self.logger.debug("Loading experiment trace ==> {}".format(csv))
             if self.cache_directory:
@@ -445,10 +449,12 @@ class ExperimentSet:
             exp = Experiment(os.path.join(experiments_directory, "{}.csv".format(csv)), self.simulation_file, trace_file, cache_file=cache_file)
             self.experiments.append(exp)      
             self.experiments_by_trace_file[os.path.basename(trace_file)] = exp 
+        # log experiments
 
         return self.experiments
     
     def load_rewards(self, reward_module=None, normalized_by=None):
+        # assert self.experiments to be sure that experiments are loaded
         assert self.experiments
         if not reward_module:
             assert self.rewards 
@@ -597,6 +603,9 @@ class PostProcesser:
             segue_scheme = SegueScheme(gr_name, aug_name, nickname)
             experiment_set = ExperimentSet(video_name, abr_name, segue_scheme, sim_file, logger, cache_directory=cache_dir)
             experiment_set.load_experiments(experiments_dir, traces_directory)
+            print("Done Loading experiments")
+            print("Experiment set has {} experiments".format(len(experiment_set.experiments)))
+            print("Loading rewards")
             experiment_set.load_rewards(reward_module=reward_module)
             
             self.sets[video_name][abr_name].append(experiment_set)

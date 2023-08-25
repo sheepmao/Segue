@@ -54,38 +54,6 @@ class GrouperWideEyeOptimizer(ABC):
     @abstractmethod
     def prefilter_combos(self, combos):
         pass
-    
+    @abstractmethod
     def compute_suboptimal(self):
-        self.logger.info("Starting suboptimal optimization")
-        options = [True, False]
-        
-        iterator = 0
-
-        if self.start_segment != 0:
-            self.logger.debug("Already computed suboptimal")
-            return
-        while True:
-                
-            self.winning_reward = self.initialize_reward()
-            self.winning_combo = None
-
-            s_lookahead = self.effective_lookahead()
-            
-            if s_lookahead == 0:
-                break
-            
-            combos = list(product(options,repeat=s_lookahead))
-            effective_combos = self.prefilter_combos(combos, s_lookahead)
-            self.logger.info("Prefiltering completed. {} combos have been computed".format(len(effective_combos)))
-            for combo in effective_combos:
-                self.logger.debug("Checking combo={}".format(combo))
-                combos_args = self.apply_combo(combo)
-                reward = self.combo_reward(combos_args)
-                self.logger.debug("Combo reward={}  {}".format(reward, "best so far" if reward < self.winning_reward else "not best"))
-                self.compare_rewards(reward, combo)
-            self.logger.info("winning combo is {}".format(self.winning_combo))
-            self.logger.info("Winning combo was ranked {}".format(effective_combos.index(self.winning_combo)))
-            assert self.winning_combo != None
-            self.apply_winning_combo()
-            iterator += self.step
-            self.logger.info("Iterator => {}, remaining => {}".format(iterator/self.step, (self.total_keyframes - iterator)/self.step))
+        pass

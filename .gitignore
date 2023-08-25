@@ -2,3 +2,9 @@
 *.swp
 *.pz~
 *.py~
+*.pyc
+results/
+videos/
+video_source/
+RL/
+traces/

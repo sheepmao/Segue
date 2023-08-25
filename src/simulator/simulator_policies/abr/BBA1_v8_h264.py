@@ -4,8 +4,7 @@ CUSHION_SEGMENTS = 5
 
 class Abr():
     def __init__(self, qoe_module):
-        self.logger = logging.getLogger("ABR")
-        self.logger.setLevel(logging.ERROR)
+        self.logger = logging.getLogger("ABRController.ABR")
         #self.hardcoded_bitrates = (5500, 8500) 
         self.hardcoded_bitrates = (400, 8000) 
 
@@ -37,15 +36,17 @@ class Abr():
         RESEVOIR_TEMP = min(140, max(8, 8*RESEVOIR_EXPANSION_FACTOR_RATE))
         CUSHION_TEMP = CUSHION_SEGMENTS * 4.0
         
-        LEVELS_NO = VIDEO_PROPERTIES[chunk_index]["n_levels"]
-        LEVELS = VIDEO_PROPERTIES[chunk_index]["levels"]
+        LEVELS_NO = VIDEO_PROPERTIES[chunk_index]["n_levels"] # number of levels(sum of each resolutions * it's level->if not use agmantation -> 1) in the chunk
+        LEVELS = VIDEO_PROPERTIES[chunk_index]["levels"] # list of dictionaries, each dictionary is a level with its properties 
+        #ex:   [{"resolution": "640x360", "bytes": 330668, "bitrate": 529.0688,etc},{resolution: "960x540", bytes: 660668, bitrate: 829.0688,etc},..]
         DATA = []
         
         last_resolution = -1
 
-        INDEXES = []
-        RESOLUTION_LIST = []
+        INDEXES = [] # list of resolution level indexes ex:(0-4)
+        RESOLUTION_LIST = [] # list of resolutions in the chunk
 
+        # create a list of indexes for each resolution and level in the current chunk 
         for i, level in enumerate(LEVELS):
             if level['resolution'] != last_resolution:
                 if INDEXES:
@@ -56,6 +57,7 @@ class Abr():
             else:
                 INDEXES.append(i)
        
+       # DATA is a list of lists, each list contains the indexes of the levels of a resolution
         DATA.append(INDEXES)
         A_DIM = len(DATA)
         

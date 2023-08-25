@@ -41,7 +41,7 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
         try:
 
             self.logger.info("Simulation optimizer grouper created")
-            gp = grouper_data[K_PARAMETERS_GROUPER]
+            gp = grouper_data[K_PARAMETERS_GROUPER] # K_PARAMETERS_GROUPER = 'parameters' specified in grouper_configs_consts.py
 
             self.bitrate_ladders_file = gp[K_BITRATE_LADDERS_GROUPER]
             self.logger.info("Bitrate ladders retrieved at {}".format(self.bitrate_ladders_file))
@@ -117,6 +117,7 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
 
 
             traces_set = sim_data[SIM_CONFIGS_TRACES_PATH]
+            print("Trace path",traces_set)
             assert os.path.exists(traces_set)
             self.logger.info("Traces set is {}".format(traces_set))
             
@@ -138,7 +139,7 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
             self.logger.info("Wide eye step = {}".format(self.step))
 
             try:
-                self.combo_number = gp[K_WIDE_EYE_COMBO_FILTER]
+                self.combo_number = gp[K_WIDE_EYE_COMBO_FILTER] # 32 -> specified in json file
                 self.logger.info("Wide eye combo number = {}".format(self.combo_number))
             except:
                 self.logger.info("Combo number not specified")
@@ -146,7 +147,7 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
                 self.logger.info("Considering combo lookahead = {}".format(self.combo_number))
 
             try:
-                self.template_filtering_resolution = gp[K_WIDE_EYE_FILTERING_RES]
+                self.template_filtering_resolution = gp[K_WIDE_EYE_FILTERING_RES] #0-> specified in json file
                 self.logger.info("Template resolution at index {}".format(self.template_filtering_resolution))
             except:
                 self.logger.info("Template filtering resolution not specified")
@@ -177,7 +178,10 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
 
         self.logger.info("Starting grouping routine. Method: simulation optimizer")
         
-
+        # Fist using template resolution (lowest) to compute the rescaling vidoes
+        # Then use this video to compute the keyframes(With GOP method)
+        # Then use this keyframes chunk videos into segment with muti-res
+        # then run the simulation optimizer
         if not K_OPTIMIZATION_FRAGMENTS_DIR_TEMPLATE_GROUPER in self.grouper_data[K_PARAMETERS_GROUPER].keys():
             self.logger.error("Fragments dir must be specified")
             sys.exit(-1)
@@ -213,8 +217,9 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
         method = self.create_forced_keys_rescaling_method()
         self.logger.debug("Forced keys rescaling method --> {}".format(method))
 
+        #Create rescaled videos list contain the one FullVideo objects
         rescaled_videos = [ FullVideo(video_template_resolution) ]
-
+        # Rescale all the other resolutions with GOP method as reference for following simulation steps
         for resolution in resolutions[1:]:
             file_out = os.path.join(self.rescaled_dir_template.format(resolution), 'unfragmented.{}'.format(EXTENSION))
             self.logger.debug("Rescaled output  stored at {}".format(file_out))
@@ -223,7 +228,7 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
             if cache_file:
                 self.logger.debug("Cache file selected: {}".format(cache_file))
 
-            self.logger.info("Starting rescaling of template resolution")
+            self.logger.info("Starting rescaling of resolution{}".format(resolution))
             video = self.video_obj.rescale_at_resolution(   file_out, resolution, 'h264', self.bitrate_ladders_file,
                                                             method, cache=self.cache, cache_file=cache_file)
             rescaled_videos.append(FullVideo(video))
@@ -274,7 +279,8 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
         self.logger.info("Vmaf operation computed succesfully")
         self.logger.info("Handling segmentation operations")
            
-        
+        ## Now we have all the rescaled videos with all the keyframes prepared for the segmentation simulation
+        ## Start the segmentation simulation with the multires video objects
         for video, res in zip(rescaled_videos, resolutions):
             self.logger.debug("Handling resolution {}".format(res))
             fragments_dir = self.fragments_dir_template.format(res)
@@ -319,7 +325,7 @@ class SimulationOptimizedWEGrouperPolicy(GrouperPolicy):
 
         self.logger.debug("Retrieving keyframes boundaries")
         self.segments_keys_indexes, self.segments_keys_timestamps = grouper_simulation_optimizer.return_suboptimal()
-        
+        self.logger.info("ketframes boundaries retrieved succesfully,index:{segments_keys_indexes}\n timestamps:{segments_keys_timestamps}".format(segments_keys_indexes=self.segments_keys_indexes,segments_keys_timestamps=self.segments_keys_timestamps))
         scene_df = self.format_dataframe_segments()
         return scene_df
 
