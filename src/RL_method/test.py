@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 ## standard libraries import
 import tempfile
@@ -56,11 +57,14 @@ def empty(folder):
             print("Error in empyting log folder")
             sys.exit(-1)
 def format_dataframe_segments(segments_keys_timestamp,segments_keys_indexes):
-    '''This function formats the segments structure into a pandas DataFrame.
-    The DataFrame contains the start and end timestamps and frames of each segment.
+    """
+    Formats the segments structure into a pandas DataFrame.
+    Args:
+        segments_keys_timestamp (list): List of segment key timestamps.
+        segments_keys_indexes (list): List of segment key indexes.
     Returns:
-        scene_df (pandas.DataFrame): DataFrame containing the start and end timestamps and frames of each segment.
-    ''' 
+        pd.DataFrame: DataFrame with segment information.
+    """
     assert len(segments_keys_timestamp) == len(segments_keys_indexes), "The number of segments keys timestamps and indexes must be the same."
     if len (segments_keys_timestamp) == 0:
         print("No segments found. Run the RL grouper first.")
@@ -88,6 +92,17 @@ def format_dataframe_segments(segments_keys_timestamp,segments_keys_indexes):
         previous_end_frame = end_frame
     return scene_df
 def chunketize_video_segments(segement_df,raw_video,crf_list,file_out_path,Force= True):
+    """
+    Splits a video into chunks based on segment data.
+    Args:
+        segment_df (pd.DataFrame): DataFrame containing segment information.
+        raw_video (Video): Video object to be chunketized.
+        crf_list (list): List of CRF values for each segment.
+        file_out_path (str): Output path for the chunked segments.
+        force (bool): Force overwrite existing files.
+    Returns:
+        Video: Video object after chunketization.
+    """
     # Create the output directories
     chunk_out_dir = os.path.join(file_out_path,'segments') # the output dir for the chunked segments
     ffprobe_out_dir = os.path.join(file_out_path,'ffprobe') # the output dir for the ffprobe output
@@ -129,6 +144,12 @@ def chunketize_video_segments(segement_df,raw_video,crf_list,file_out_path,Force
     return raw_video_encoded
 
 def build_segment_composition(segment_df,out_dir):
+    """
+    Builds segment composition and saves it as a JSON file.
+    Args:
+        segment_df (pd.DataFrame): DataFrame containing segment information.
+        out_dir (str): Directory to save the segment composition file.
+    """
     segment_data = {}
     for i, chunk in scene_df.iterrows():
         time_absolute_start = chunk['Start Time']
@@ -158,6 +179,13 @@ def build_segment_composition(segment_df,out_dir):
     print(f"Segments structure json file saved to {out_dir}")
 
 def load_video_properties(VIDEO_PROPERTIES_FILE):
+    """
+    Loads video properties from a JSON file.
+    Args:
+        video_properties_file (str): Path to the video properties JSON file.
+    Returns:
+        dict: Dictionary containing video properties.
+    """
     with open(VIDEO_PROPERTIES_FILE, "r") as fin:
         data = json.load(fin)
     ss = {}
@@ -205,6 +233,8 @@ if __name__ == "__main__":
     video_path_list = glob.glob(os.path.join(video_dir_path, "*"))
     raw_video_list = []
     encoded_video_list = []
+
+
     # read video and create video object for each video
     for video_path in video_path_list:
         # Create the output directories
@@ -220,6 +250,9 @@ if __name__ == "__main__":
         ## Create logger
         print(f"Create logger for {video_name} at {log_dir}")
         main_logger = create_logger("main_logger", os.path.join(log_dir, "main.log"),Verbose)
+
+
+
         #### RL grouper policy ####
         ## Run RL and get the segments structure
         # TODO: run RL grouper policy to get following data
@@ -227,6 +260,9 @@ if __name__ == "__main__":
         segments_keys_indexes = [0, 120.0, 240.0, 498.0, 673.0, 793.0, 913.0, 1145.0, 1265.0, 1346.0, 1531.0, 1651.0, 1813.0, 1919.0, 2039.0, 2194.0, 2394.0, 2494.0, 2614.0, 2704.0, 2824.0, 2901.0, 2963.0, 3045.0, 3165.0, 3285.0, 3405.0, 3513.0, 3578.0, 3698.0, 3744.0, 3860.0, 3989.0, 4032.0, 4227.0, 4332.0, 4452.0, 4544.0, 4726.0, 4900.0, 5013.0, 5131.0, 5292.0, 5430.0, 5579.0, 5699.0, 5844.0, 5964.0, 6128.0, 6228.0, 6308.0, 6488.0, 6670.0, 6833.0, 6953.0, 7131.0, 7208.0, 7325.0, 7500.0, 7613.0, 7661.0, 7732.0, 7769.0, 7889.0, 8024.0, 8154.0, 8274.0, 8394.0, 8514.0, 8634.0, 8754.0, 8874.0, 9009.0, 9148.0, 9268.0, 9379.0, 9468.0, 9593.0, 9712.0, 9850.0, 9987.0, 10125.0, 10260.0, 10409.0, 10613.0, 10797.0, 10962.0, 11088.0, 11208.0, 11349.0, 11524.0, 11771.0, 11891.0, 12059.0, 12299.0, 12539.0, 12779.0, 12899.0, 13019.0, 13139.0, 13259.0, 13379.0, 13499.0, 13619.0, 13739.0, 13859.0, 13942.0, 14062.0, 14182.0]
         crf_list = np.ones(len(segments_keys_timestamps))*23
 
+
+        # Create Video object from the video path and log the video info
+        # Video object is the wrapper of the video file containing FFmpeg and FFprobe functionalities
         raw_video = Video(video_path,logdir=log_dir,verbose=Verbose)
         print(f'Video obj for {video_name} created, \
                 total frames: {raw_video.load_total_frames()}, \

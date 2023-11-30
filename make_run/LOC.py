@@ -14,13 +14,17 @@ def conc(mainf, subf, filename):
 # MAP HERE A VIDEO KEY TO THEIR CONFIGURATION FILE #
 
 VIDEO_LOC = {}
-VIDEO_LOC['TEMPLATE'] = conc('videos', '', 'TEMPLATE')
+#VIDEO_LOC['TEMPLATE'] = conc('videos', '', 'TEMPLATE')
+VIDEO_LOC['BBB'] = conc('videos', '', 'BBB')
 
 
 # MAP HERE A TRACE SET KEY TO THEIR FOLDER #
 
 TRACES_LOC = {}
-TRACES_LOC['TRACE-ID'] = 'path/to/traceset'
+#TRACES_LOC['TRACE-ID'] = 'path/to/traceset'
+TRACES_LOC['dummy'] = './traces/dummy'
+TRACES_LOC['dummy1'] = './traces/dummy1'
+TRACES_LOC['oboe_traces'] = './traces/oboe_traces'
 
 SIM_FILE_LOC = {}
 SIM_FILE_LOC['MOBILE'] = conc('simulation_file','','simulation_file_vmaf_mobile')
