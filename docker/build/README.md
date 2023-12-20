@@ -1,0 +1,1 @@
+This is docker contrainer for FFMPEG

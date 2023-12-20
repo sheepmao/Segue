@@ -705,39 +705,101 @@ class Video:
             return video
             
 
-    def rescale_h264_constant_quality(  self, 
-                                        video_out_path, 
-                                        crf,
-                                        gop, 
-                                        forced_key_frames=None, 
-                                        force=False):
+    # def rescale_h264_constant_quality(  self, 
+    #                                     video_out_path, 
+    #                                     crf,
+    #                                     gop, 
+    #                                     forced_key_frames=None, 
+    #                                     force=False):
+    #     """
+    #     Rescales the video using h264 codec with constant quality.
+        
+    #     :param video_out_path: Output path for the rescaled video.
+    #     :param crf: Constant Rate Factor for the video encoding.
+    #     :param gop: Group of pictures size.
+    #     :param forced_key_frames: List of frames to be forced as keyframes.
+    #     :param force: Flag to force the re-encoding even if output exists.
+    #     """
+    #     '''Rescale a video at a given resolution, using ffmpeg and h264 codec'''
+    #     '''If force_key_frames is not None, the video is rescaled using the keyframes 
+    #     specified which will serve as boundaries for the segments'''
+
+
+    #     self.logger.debug("Selected rescale method h264 in constant quality")
+        
+    #     video = self.check_other_video(video_out_path, force)
+    #     if video is not None:
+    #         return video
+
+    #     gop_string = ""
+    #     if gop > 0:
+    #         self.logger.debug("Rescaling with a gop of {}".format(gop))
+    #         gop_string = "-g {}".format(gop)
+        
+    #     forced_key_frames_string = ""
+
+    #     if forced_key_frames is not None:
+    #         if isinstance(forced_key_frames, list):
+    #             self.logger.debug("List of keyframes specified")
+    #             k_string = ['eq(n,{})'.format(k) for k in forced_key_frames]
+    #             k_string = '+'.join(k_string).strip()
+    #             forced_key_frames_string = '-force_key_frames "expr:{}"'.format(k_string)
+
+    #     cmd = "ffmpeg -i {} -c:v libx264 -crf {} {} {} -y {}".format(   self._video_path, 
+    #                                                                     crf, 
+    #                                                                     forced_key_frames_string,
+    #                                                                     gop_string, 
+    #                                                                     video_out_path)
+
+    #     self.logger.info("Executing {}".format(cmd))
+    #     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    #     outs, errs = proc.communicate()
+    #     assert os.path.exists(video_out_path), "Video {} does not exist".format(video_out_path)
+    #     self.logger.info("Rescaling from {} to {} completed succesfully!".format(self._video_path, video_out_path))
+    #     video = Video(video_out_path, self.logs_dir, self.verbose)
+        
+    #     if (video.load_total_frames() != self.load_total_frames()):
+    #         self.logger.error("Video {} exists but wasn't encoded correctly. ".format(video_out_path))
+    #         self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format( video.load_total_frames(),
+    #                                                                                             self.load_total_frames()))
+    #         os.remove(video_out_path)
+    #         sys.exit(-1)
+    #     else:
+    #         return video
+    def rescale_h264_constant_quality(self, 
+                                    video_out_path, 
+                                    crf, 
+                                    width, 
+                                    height, 
+                                    gop=0, 
+                                    forced_key_frames=None, 
+                                    force=False):
         """
-        Rescales the video using h264 codec with constant quality.
+        Rescales the video using h264 codec with constant quality and specified resolution.
         
         :param video_out_path: Output path for the rescaled video.
         :param crf: Constant Rate Factor for the video encoding.
+        :param width: Target width of the video.
+        :param height: Target height of the video.
         :param gop: Group of pictures size.
         :param forced_key_frames: List of frames to be forced as keyframes.
         :param force: Flag to force the re-encoding even if output exists.
         """
-        '''Rescale a video at a given resolution, using ffmpeg and h264 codec'''
-        '''If force_key_frames is not None, the video is rescaled using the keyframes 
-        specified which will serve as boundaries for the segments'''
 
+        self.logger.debug("Selected rescale method h264 in constant quality with resolution change")
 
-        self.logger.debug("Selected rescale method h264 in constant quality")
-        
         video = self.check_other_video(video_out_path, force)
         if video is not None:
             return video
+
+        rescale_string = "-s {}x{}".format(width, height)
 
         gop_string = ""
         if gop > 0:
             self.logger.debug("Rescaling with a gop of {}".format(gop))
             gop_string = "-g {}".format(gop)
-        
-        forced_key_frames_string = ""
 
+        forced_key_frames_string = ""
         if forced_key_frames is not None:
             if isinstance(forced_key_frames, list):
                 self.logger.debug("List of keyframes specified")
@@ -745,8 +807,9 @@ class Video:
                 k_string = '+'.join(k_string).strip()
                 forced_key_frames_string = '-force_key_frames "expr:{}"'.format(k_string)
 
-        cmd = "ffmpeg -i {} -c:v libx264 -crf {} {} {} -y {}".format(   self._video_path, 
+        cmd = "ffmpeg -i {} -c:v libx264 -crf {} {} {} {} -y {}".format(self._video_path, 
                                                                         crf, 
+                                                                        rescale_string,
                                                                         forced_key_frames_string,
                                                                         gop_string, 
                                                                         video_out_path)
@@ -755,17 +818,19 @@ class Video:
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         outs, errs = proc.communicate()
         assert os.path.exists(video_out_path), "Video {} does not exist".format(video_out_path)
-        self.logger.info("Rescaling from {} to {} completed succesfully!".format(self._video_path, video_out_path))
+        self.logger.info("Rescaling from {} to {} completed successfully!".format(self._video_path, video_out_path))
         video = Video(video_out_path, self.logs_dir, self.verbose)
-        
+
         if (video.load_total_frames() != self.load_total_frames()):
             self.logger.error("Video {} exists but wasn't encoded correctly. ".format(video_out_path))
-            self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format( video.load_total_frames(),
+            self.logger.error("Total frames: {}, Expected {}. Removing and terminating".format(video.load_total_frames(),
                                                                                                 self.load_total_frames()))
             os.remove(video_out_path)
             sys.exit(-1)
         else:
             return video
+        #return video
+
     def rescale_h264_constant_quality_list(self,
                                     video_out_path,
                                     crf_values,

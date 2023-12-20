@@ -432,9 +432,9 @@ class FullVideo:
                                vmaf_model_path, 
                                store_file, vmaf_mobile)
        
-        
         pmkdir(os.path.dirname(store_file))
-
+        print("store_file dir created sucessfully:",os.path.dirname(store_file))
+        print(store_file,"is exist:",os.path.exists(store_file))
         self.logger.info("Exectuting vmaf command {}".format(cmd))
         proc = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         outs, errs = proc.communicate()

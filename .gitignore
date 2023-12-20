@@ -3,8 +3,16 @@
 *.pz~
 *.py~
 *.pyc
+*.mp4
+*.y4m
+*.zip
 results/
 videos/
 video_source/
 RL/
 traces/
+4K_video/
+video_soruce/
+video_target/
+video_finished/
+generating_data/

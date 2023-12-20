@@ -1,5 +1,7 @@
 #!/bin/bash
 # set noninteractive installation
+set -ex
+
 mkdir -p /ffmpeg_sources
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
@@ -44,8 +46,11 @@ apt-get install -y \
   mkvtoolnix \
   zlib1g-dev 
 
+apt-get update && apt-get upgrade -y
+which pip3 || { echo "pip3 not found"; exit 1; }
+
 pip3 install seaborn youtube-dl scenedetect[opencv,progress_bar] \
      numpy scipy matplotlib notebook pandas sympy nose scikit-learn \
-     scikit-image h5py sureal meson stable-baselines
+     scikit-image h5py sureal meson stable-baselines Cython torch torchvision
 
 

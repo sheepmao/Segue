@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ## standard libraries import
 import tempfile
 import glob, json, os, subprocess, datetime, subprocess
@@ -116,7 +114,8 @@ def chunketize_video_segments(segement_df,raw_video,crf_list,file_out_path,Force
     forced_key_frames = segement_df['Start Frame'].tolist()
     forced_key_times_stamps = segement_df['Start Time'].tolist()
 
- 
+    # TODO : change the  rescale_h264_constant_quality to rescale_h264_constant_quality_list to support different crf for each segment
+    # DEBUG: the rescale_h264_constant_quality_list is not working Try to fix it
 
     # rescaled_video = raw_video.rescale_h264_constant_quality_list(video_out_path=main_video_unfragmented,\
     #                                                          crf_values = crf_list, \

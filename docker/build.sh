@@ -1,2 +1,2 @@
 cd build 
-sudo docker build --squash . -t maya2
+sudo docker build --squash . -t sheepmao
