@@ -19,15 +19,6 @@ def pmkdir(kdir):
     if not os.path.exists(kdir):
         os.makedirs(kdir)
 
-# 計算VMAF的函數（需要根據實際情況實現）
-def calculate_vmaf(video_file):
-    # 實現VMAF計算邏輯
-    pass
-
-# 保存數據的函數
-def save_data(crf, duration, vmaf_score):
-    # 將數據寫入文件或數據庫
-    pass
 def format_dataframe_segments(segments_keys_timestamp,segments_keys_indexes):
     """
     Formats the segments structure into a pandas DataFrame.
@@ -81,12 +72,11 @@ if __name__== "__main__":
     crf_values = [15,17,21, 23, 27, 29,31, 34, 40, 46,52,55]  
     segment_durations = [0.5, 1.0,2,3.0,4.0,5]
 
-    # 視頻文件路徑
     video_folder_path = "./video_source"
     if not os.path.exists(video_folder_path):
         raise FileNotFoundError("Video file not found")
-    # 輸出目錄
-    output_dir = "path/to/output"
+
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)   # 創建目錄
 
@@ -177,11 +167,11 @@ if __name__== "__main__":
                     print("Assign VMAF to segments")
                     segment_vmaf_file_out = os.path.join(raw_segment_output,f'videos/{res}/{crf}x{duration}/',"segments/segments_vmaf.json")
                     rescaled_video.assign_vmaf_to_segments(segment_vmaf_file_out)
+
+                    ffprobe_file_out = os.path.join(raw_segment_output,f'videos/{res}/{crf}x{duration}/',"ffprobe/ffprobe.json")
+                    rescaled_video.load_ffprobe(ffprobe_file_out)
+                    print("ffprobe computed for rescaled video at resolution {}".format(res))
+                    print("Assign ffprobe to segments")
+                    segment_ffprobe_file_out = os.path.join(raw_segment_output,f'videos/{res}/',"segments/segments_ffprobe.json")
+                    rescaled_video.assign_ffprobe_to_segments(segment_ffprobe_file_out)
             
-
-
-                # TODO: 計算VMAF分數
-                # vmaf_score = calculate_vmaf(output_file)
-
-                # TODO: 將結果保存至訓練數據集
-                # save_data(crf, duration, vmaf_score)

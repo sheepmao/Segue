@@ -463,7 +463,7 @@ class FullVideo:
 
         for s in self._segments_list:
             self.logger.debug("Handling segment {}".format(s.seqno()))
-            fout = os.path.join(vmaf_store_dir, "{}.vpf".format(s.seqno()))
+            fout = os.path.join(vmaf_store_dir, "{}.json".format(s.seqno()))
             assigned = False
             if os.path.exists(fout):
                 try:
@@ -498,7 +498,7 @@ class FullVideo:
 
         for s in self._segments_list:
             self.logger.debug("Handling segment {}".format(s.seqno()))
-            fout = os.path.join(ffprobe_store_dir, "{}.ffprobe".format(s.seqno()))
+            fout = os.path.join(ffprobe_store_dir, "{}.json".format(s.seqno()))
             assigned = False
             if os.path.exists(fout):
                 try:

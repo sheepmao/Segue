@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 def convert_yuv_to_mp4(yuv_file, mp4_file, width, height, fps):
     # Convert the 4K yuv file to MP4 file
-    cmd = 'ffmpeg -i {} -c:v libx264 -crf 18 -pix_fmt yuv420p -s {}x{} -r {} {}' \
-          .format(yuv_file,width, height, fps, mp4_file)
+    cmd = 'ffmpeg -i {} -c:v libx264 -crf 0 -pix_fmt yuv420p -s {}x{} {}' \
+          .format(yuv_file,width, height, mp4_file)
     print("cmd:",cmd)
     # call the command 
     proc = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -30,7 +30,7 @@ if __name__ == '__main__':
         video_name = video.split('.')[0]
         yuv_file = os.path.join(video_source_dir, video)
         mp4_file = os.path.join(video_target_dir, video_name + '.mp4')
-        convert_yuv_to_mp4(yuv_file, mp4_file, 3840, 2160, 60)
+        convert_yuv_to_mp4(yuv_file, mp4_file, 3840, 2160)
         #check if the file exists
         if os.path.exists(mp4_file):
             print('success:',video)
